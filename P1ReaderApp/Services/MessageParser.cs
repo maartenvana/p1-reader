@@ -25,8 +25,8 @@ namespace P1ReaderApp.Services
         {
             var measurements = new P1Measurements
             {
-                ActualElectricityPowerDelivered = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerDelivered), messages),
-                ActualElectricityPowerReceived = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerReceived), messages),
+                ActualElectricityPowerDelivery = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerDelivery), messages),
+                ActualElectricityPowerDraw = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerDraw), messages),
                 ElectricityDeliveredByClientTariff1 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredByClientTariff1), messages),
                 ElectricityDeliveredByClientTariff2 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredByClientTariff2), messages),
                 ElectricityDeliveredToClientTariff1 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredToClientTariff1), messages),

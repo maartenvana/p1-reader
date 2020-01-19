@@ -95,6 +95,11 @@ namespace P1ReaderApp
                 var dataBitsOption = target.CreateDataBitsOption();
                 var parityOption = target.CreateParityOption();
 
+                var influxHostOption = target.CreateInfluxHostOption();
+                var influxDatabaseOption = target.CreateInfluxDatabaseOption();
+                var influxUsernameOption = target.CreateInfluxUserNameOption();
+                var influxPasswordOption = target.CreateInfluxPasswordOption();
+
                 target.OnExecute(() =>
                 {
                     try
@@ -107,7 +112,12 @@ namespace P1ReaderApp
                         var dataBits = dataBitsOption.GetRequiredIntValue();
                         var parity = parityOption.GetRequiredIntValue();
 
-                        IStorage storage = new InfluxDbStorage();
+                        var influxHost = influxHostOption.GetRequiredStringValue();
+                        var influxDatabase = influxDatabaseOption.GetRequiredStringValue();
+                        var influxUsername = influxUsernameOption.GetOptionalStringValue(null);
+                        var influxPassword = influxPasswordOption.GetOptionalStringValue(null);
+
+                        IStorage storage = new InfluxDbStorage(influxHost, influxDatabase, influxUsername, influxPassword);
                         _measurementsBuffer.RegisterMessageHandler(storage.SaveP1Measurement);
 
                         var serialPortReader = new SerialPortReader(port, baudRate, stopBits, parity, dataBits, _serialMessageBuffer);

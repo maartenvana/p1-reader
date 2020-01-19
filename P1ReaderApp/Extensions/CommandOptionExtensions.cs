@@ -5,28 +5,29 @@ namespace P1ReaderApp.Extensions
 {
     public static class CommandOptionExtensions
     {
-        public static int GetRequiredIntValue(this CommandOption baudRateOption)
+        public static string GetOptionalStringValue(this CommandOption option, string defaultValue)
         {
-            if (baudRateOption.HasValue())
-            {
-                return int.Parse(baudRateOption.Value());
-            }
-            else
-            {
-                throw new ConfigurationValueRequiredException(baudRateOption);
-            }
+            return option.HasValue() ? option.Value() : defaultValue;
         }
 
-        public static string GetRequiredStringValue(this CommandOption portOption)
+        public static int GetRequiredIntValue(this CommandOption option)
         {
-            if (portOption.HasValue())
+            if (!option.HasValue())
             {
-                return portOption.Value();
+                throw new ConfigurationValueRequiredException(option);
             }
-            else
+
+            return int.Parse(option.Value());
+        }
+
+        public static string GetRequiredStringValue(this CommandOption option)
+        {
+            if (!option.HasValue())
             {
-                throw new ConfigurationValueRequiredException(portOption);
+                throw new ConfigurationValueRequiredException(option);
             }
+
+            return option.Value();
         }
     }
 }

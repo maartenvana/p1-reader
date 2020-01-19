@@ -23,8 +23,8 @@ namespace P1ReaderApp.Services
             Console.WriteLine($"Tariff: {measurements.Tariff}");
             Console.WriteLine($"----------------------------------------------------------------------");
             Console.WriteLine($"----------------------------------------------------------------------");
-            Console.WriteLine($"ActualElectricityPowerDelivered: {measurements.ActualElectricityPowerDelivered} kW");
-            Console.WriteLine($"ActualElectricityPowerReceived: {measurements.ActualElectricityPowerReceived} kW");
+            Console.WriteLine($"ActualElectricityPowerDraw: {measurements.ActualElectricityPowerDraw} kW");
+            Console.WriteLine($"ActualElectricityPowerDelivery: {measurements.ActualElectricityPowerDelivery} kW");
             Console.WriteLine($"ElectricityDeliveredByClientTariff1: {measurements.ElectricityDeliveredByClientTariff1} kWh");
             Console.WriteLine($"ElectricityDeliveredByClientTariff2: {measurements.ElectricityDeliveredByClientTariff2} kWh");
             Console.WriteLine($"ElectricityDeliveredToClientTariff1: {measurements.ElectricityDeliveredToClientTariff1} kWh");
