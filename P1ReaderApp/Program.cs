@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.CommandLineUtils;
 using P1ReaderApp.Exceptions;
+using P1ReaderApp.Extensions;
 using P1ReaderApp.Model;
 using P1ReaderApp.Services;
 using P1ReaderApp.Storage;
@@ -11,6 +12,9 @@ namespace P1ReaderApp
 {
     internal static class Program
     {
+        private static IMessageBuffer<P1Measurements> _measurementsBuffer;
+        private static IMessageBuffer<List<string>> _serialMessageBuffer;
+
         private static void CreateDaemonLogger()
         {
             Log.Logger = new LoggerConfiguration()
@@ -28,48 +32,18 @@ namespace P1ReaderApp
                 .CreateLogger();
         }
 
-        private static int GetBaudRateValue(CommandOption baudRateOption)
+        private static Action<CommandLineApplication> DebugApplication()
         {
-            if (baudRateOption.HasValue())
-            {
-                return int.Parse(baudRateOption.Value());
-            }
-            else
-            {
-                throw new ConfigurationValueRequiredException(baudRateOption);
-            }
-        }
-
-        private static string GetPortValue(CommandOption portOption)
-        {
-            if (portOption.HasValue())
-            {
-                return portOption.Value();
-            }
-            else
-            {
-                throw new ConfigurationValueRequiredException(portOption);
-            }
-        }
-
-        private static void Main(string[] args)
-        {
-            IMessageBuffer<List<string>> serialMessageBuffer = new MessageBuffer<List<string>>();
-            IMessageBuffer<P1Measurements> measurementsBuffer = new MessageBuffer<P1Measurements>();
-            IMessageParser messageParser = new MessageParser(measurementsBuffer);
-
-            serialMessageBuffer.RegisterMessageHandler(messageParser.ParseSerialMessages);
-
-            var commandLineApplication = new CommandLineApplication(throwOnUnexpectedArg: false);
-
-            var portOption = commandLineApplication.Option("-p | --port", "Serial port to read from (Example: \"/dev/ttyUSB0\")", CommandOptionType.SingleValue);
-            var baudRateOption = commandLineApplication.Option("-b | --baudrate", "Baudrate to read serial port with (Example: 115200 or 9600)", CommandOptionType.SingleValue);
-
-            commandLineApplication.HelpOption("-? | -h | --help");
-
-            commandLineApplication.Command("debug", (target) =>
+            return (target) =>
             {
                 target.Description = "Show debug information";
+                target.HelpOption("-? | -h | --help");
+
+                var portOption = target.CreatePortOption();
+                var baudRateOption = target.CreateBaudRateOption();
+                var stopBitsOption = target.CreateStopBitsOption();
+                var dataBitsOption = target.CreateDataBitsOption();
+                var parityOption = target.CreateParityOption();
 
                 target.OnExecute(() =>
                 {
@@ -77,13 +51,16 @@ namespace P1ReaderApp
                     {
                         CreateStatusLogger();
 
-                        var port = GetPortValue(portOption);
-                        var baudRate = GetBaudRateValue(baudRateOption);
+                        var port = portOption.GetRequiredStringValue();
+                        var baudRate = baudRateOption.GetRequiredIntValue();
+                        var stopBits = stopBitsOption.GetRequiredIntValue();
+                        var dataBits = dataBitsOption.GetRequiredIntValue();
+                        var parity = parityOption.GetRequiredIntValue();
 
                         var statusPrintService = new ConsoleStatusPrintService();
-                        measurementsBuffer.RegisterMessageHandler(statusPrintService.PrintP1Measurement);
+                        _measurementsBuffer.RegisterMessageHandler(statusPrintService.PrintP1Measurement);
 
-                        var serialPortReader = new SerialPortReader(port, baudRate, serialMessageBuffer);
+                        var serialPortReader = new SerialPortReader(port, baudRate, stopBits, parity, dataBits, _serialMessageBuffer);
                         serialPortReader.StartReading();
 
                         while (true)
@@ -102,11 +79,21 @@ namespace P1ReaderApp
 
                     return 1;
                 });
-            });
+            };
+        }
 
-            commandLineApplication.Command("influxdb", (target) =>
+        private static Action<CommandLineApplication> InfluxDbApplication()
+        {
+            return (target) =>
             {
                 target.Description = "Write to influxdb";
+                target.HelpOption("-? | -h | --help");
+
+                var portOption = target.CreatePortOption();
+                var baudRateOption = target.CreateBaudRateOption();
+                var stopBitsOption = target.CreateStopBitsOption();
+                var dataBitsOption = target.CreateDataBitsOption();
+                var parityOption = target.CreateParityOption();
 
                 target.OnExecute(() =>
                 {
@@ -114,13 +101,16 @@ namespace P1ReaderApp
                     {
                         CreateDaemonLogger();
 
-                        var port = GetPortValue(portOption);
-                        var baudRate = GetBaudRateValue(baudRateOption);
+                        var port = portOption.GetRequiredStringValue();
+                        var baudRate = baudRateOption.GetRequiredIntValue();
+                        var stopBits = stopBitsOption.GetRequiredIntValue();
+                        var dataBits = dataBitsOption.GetRequiredIntValue();
+                        var parity = parityOption.GetRequiredIntValue();
 
                         IStorage storage = new InfluxDbStorage();
-                        measurementsBuffer.RegisterMessageHandler(storage.SaveP1Measurement);
+                        _measurementsBuffer.RegisterMessageHandler(storage.SaveP1Measurement);
 
-                        var serialPortReader = new SerialPortReader(port, baudRate, serialMessageBuffer);
+                        var serialPortReader = new SerialPortReader(port, baudRate, stopBits, parity, dataBits, _serialMessageBuffer);
                         serialPortReader.StartReading();
 
                         Console.ReadLine();
@@ -136,11 +126,30 @@ namespace P1ReaderApp
 
                     return 1;
                 });
-            });
+            };
+        }
+
+        private static void Main(string[] args)
+        {
+            _serialMessageBuffer = new MessageBuffer<List<string>>();
+            _measurementsBuffer = new MessageBuffer<P1Measurements>();
+            var messageParser = new MessageParser(_measurementsBuffer);
+
+            _serialMessageBuffer.RegisterMessageHandler(messageParser.ParseSerialMessages);
+
+            var commandLineApplication = new CommandLineApplication(throwOnUnexpectedArg: false);
+
+            commandLineApplication.HelpOption("-? | -h | --help");
+
+            commandLineApplication.Command("debug", DebugApplication());
+            commandLineApplication.Command("influxdb", InfluxDbApplication());
+            commandLineApplication.Command("debug", DebugApplication());
 
             commandLineApplication.OnExecute(() =>
             {
                 commandLineApplication.ShowHelp();
+
+                return 1;
             });
 
             commandLineApplication.Execute(args);

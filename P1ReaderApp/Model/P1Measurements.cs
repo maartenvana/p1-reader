@@ -6,11 +6,11 @@ namespace P1ReaderApp.Model
 {
     public class P1Measurements
     {
-        [OBISField("1-0:1.7.0", ValueRegex = @"[\(](.*?)(\*kW)[\)]")]
-        public decimal ActualElectricityPowerDelivered { get; set; }
-
         [OBISField("1-0:2.7.0", ValueRegex = @"[\(](.*?)(\*kW)[\)]")]
-        public decimal ActualElectricityPowerReceived { get; set; }
+        public decimal ActualElectricityPowerDelivery { get; set; }
+
+        [OBISField("1-0:1.7.0", ValueRegex = @"[\(](.*?)(\*kW)[\)]")]
+        public decimal ActualElectricityPowerDraw { get; set; }
 
         [OBISField("0-n:24.1.0")]
         public List<P1AddonDeviceMeasurement> AddonMeasurements { get; set; } = new List<P1AddonDeviceMeasurement>();
@@ -75,7 +75,7 @@ namespace P1ReaderApp.Model
         [OBISField("0-0:96.14.0")]
         public int Tariff { get; set; }
 
-        [OBISField("0-0:1.0.0", Format = "yyMMddhhmmss", ValueRegex = @"[\(](.*?)(W)[\)]")]
+        [OBISField("0-0:1.0.0", Format = "yyMMddHHmmss", ValueRegex = @"[\(](.*?)(W)[\)]")]
         public DateTime TimeStamp { get; set; }
 
         [OBISField("1-3:0.2.8")]

@@ -15,14 +15,20 @@ namespace P1ReaderApp.Services
         private CancellationTokenSource _cancellationTokenSource;
         private bool _disposedValue = false;
 
-        public SerialPortReader(string portName, int baudrate, IMessageBuffer<List<string>> messageBufferService)
+        public SerialPortReader(
+            string portName,
+            int baudrate,
+            int stopBits,
+            int parity,
+            int dataBits,
+            IMessageBuffer<List<string>> messageBufferService)
         {
             _serialPort = new SerialPort(portName, baudrate)
             {
                 ReadTimeout = 20_000,
-                Parity = Parity.Even,
-                DataBits = 7,
-                StopBits = StopBits.One
+                Parity = (Parity)parity,
+                DataBits = dataBits,
+                StopBits = (StopBits)stopBits
             };
 
             _messageBuffer = messageBufferService;
