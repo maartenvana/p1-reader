@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "P1ReaderApp": {
+      "commandName": "Project",
+      "commandLineArgs": "debug -h"
+    }
+  }
+}
