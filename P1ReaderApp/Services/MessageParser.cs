@@ -1,5 +1,7 @@
 ﻿using P1ReaderApp.Attributes;
+using P1ReaderApp.Exceptions;
 using P1ReaderApp.Model;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,37 +23,49 @@ namespace P1ReaderApp.Services
             CreateFieldDictionary();
         }
 
-        public async Task<P1Measurements> ParseSerialMessages(List<string> messages)
+        public async Task<P1Measurements> ParseSerialMessages(P1MessageCollection messageCollection)
         {
-            var measurements = new P1Measurements
+            P1Measurements measurements = null;
+            try
             {
-                ActualElectricityPowerDelivery = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerDelivery), messages),
-                ActualElectricityPowerDraw = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerDraw), messages),
-                ElectricityDeliveredByClientTariff1 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredByClientTariff1), messages),
-                ElectricityDeliveredByClientTariff2 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredByClientTariff2), messages),
-                ElectricityDeliveredToClientTariff1 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredToClientTariff1), messages),
-                ElectricityDeliveredToClientTariff2 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredToClientTariff2), messages),
-                EquipmentIdentifier = GetStringField(nameof(P1Measurements.EquipmentIdentifier), messages),
-                InstantaneousActivePowerDeliveryL1 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDeliveryL1), messages),
-                InstantaneousActivePowerDeliveryL2 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDeliveryL2), messages),
-                InstantaneousActivePowerDeliveryL3 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDeliveryL3), messages),
-                InstantaneousActivePowerDrawL1 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDrawL1), messages),
-                InstantaneousActivePowerDrawL2 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDrawL2), messages),
-                InstantaneousActivePowerDrawL3 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDrawL3), messages),
-                InstantaneousCurrentL1 = GetIntegerField(nameof(P1Measurements.InstantaneousCurrentL1), messages),
-                InstantaneousCurrentL2 = GetIntegerField(nameof(P1Measurements.InstantaneousCurrentL2), messages),
-                InstantaneousCurrentL3 = GetIntegerField(nameof(P1Measurements.InstantaneousCurrentL3), messages),
-                InstantaneousVoltageL1 = GetIntegerField(nameof(P1Measurements.InstantaneousVoltageL1), messages),
-                InstantaneousVoltageL2 = GetIntegerField(nameof(P1Measurements.InstantaneousVoltageL2), messages),
-                InstantaneousVoltageL3 = GetIntegerField(nameof(P1Measurements.InstantaneousVoltageL3), messages),
-                LongPowerFailuresInAnyPhase = GetIntegerField(nameof(P1Measurements.LongPowerFailuresInAnyPhase), messages),
-                PowerFailuresInAnyPhase = GetIntegerField(nameof(P1Measurements.PowerFailuresInAnyPhase), messages),
-                Tariff = GetIntegerField(nameof(P1Measurements.Tariff), messages),
-                TimeStamp = GetDateTimeField(nameof(P1Measurements.TimeStamp), messages),
-                Version = GetStringField(nameof(P1Measurements.Version), messages)
-            };
+                var messages = messageCollection.Messages;
 
-            await _measurementsBuffer.QueueMessage(measurements, CancellationToken.None);
+                measurements = new P1Measurements
+                {
+                    ActualElectricityPowerDelivery = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerDelivery), messages),
+                    ActualElectricityPowerDraw = GetDecimalField(nameof(P1Measurements.ActualElectricityPowerDraw), messages),
+                    ElectricityDeliveredByClientTariff1 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredByClientTariff1), messages),
+                    ElectricityDeliveredByClientTariff2 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredByClientTariff2), messages),
+                    ElectricityDeliveredToClientTariff1 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredToClientTariff1), messages),
+                    ElectricityDeliveredToClientTariff2 = GetDecimalField(nameof(P1Measurements.ElectricityDeliveredToClientTariff2), messages),
+                    EquipmentIdentifier = GetStringField(nameof(P1Measurements.EquipmentIdentifier), messages),
+                    InstantaneousActivePowerDeliveryL1 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDeliveryL1), messages),
+                    InstantaneousActivePowerDeliveryL2 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDeliveryL2), messages),
+                    InstantaneousActivePowerDeliveryL3 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDeliveryL3), messages),
+                    InstantaneousActivePowerDrawL1 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDrawL1), messages),
+                    InstantaneousActivePowerDrawL2 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDrawL2), messages),
+                    InstantaneousActivePowerDrawL3 = GetDecimalField(nameof(P1Measurements.InstantaneousActivePowerDrawL3), messages),
+                    InstantaneousCurrentL1 = GetIntegerField(nameof(P1Measurements.InstantaneousCurrentL1), messages),
+                    InstantaneousCurrentL2 = GetIntegerField(nameof(P1Measurements.InstantaneousCurrentL2), messages),
+                    InstantaneousCurrentL3 = GetIntegerField(nameof(P1Measurements.InstantaneousCurrentL3), messages),
+                    InstantaneousVoltageL1 = GetIntegerField(nameof(P1Measurements.InstantaneousVoltageL1), messages),
+                    InstantaneousVoltageL2 = GetIntegerField(nameof(P1Measurements.InstantaneousVoltageL2), messages),
+                    InstantaneousVoltageL3 = GetIntegerField(nameof(P1Measurements.InstantaneousVoltageL3), messages),
+                    LongPowerFailuresInAnyPhase = GetIntegerField(nameof(P1Measurements.LongPowerFailuresInAnyPhase), messages),
+                    PowerFailuresInAnyPhase = GetIntegerField(nameof(P1Measurements.PowerFailuresInAnyPhase), messages),
+                    Tariff = GetIntegerField(nameof(P1Measurements.Tariff), messages),
+                    TimeStamp = messageCollection.ReceivedUtc,
+                    //Using the actual timestamp is for now ignored, due to not knowing wich time zone is applicable
+                    //TimeStamp = GetDateTimeField(nameof(P1Measurements.TimeStamp), messages),
+                    Version = GetStringField(nameof(P1Measurements.Version), messages)
+                };
+
+                await _measurementsBuffer.QueueMessage(measurements, CancellationToken.None);
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "Could not parse serial message");
+            }
 
             return measurements;
         }
@@ -74,20 +88,18 @@ namespace P1ReaderApp.Services
             }
         }
 
-        private DateTime GetDateTimeField(string fieldName, List<string> messages)
-        {
-            var (obisField, fieldValue) = GetField(fieldName, messages);
-
-            return string.IsNullOrWhiteSpace(fieldValue) ? new DateTime(1970, 1, 1) :
-                DateTime.ParseExact(fieldValue, obisField.Format, CultureInfo.InvariantCulture);
-        }
-
         private decimal GetDecimalField(string fieldName, List<string> messages)
         {
             var (_, fieldValue) = GetField(fieldName, messages);
-
-            return string.IsNullOrWhiteSpace(fieldValue) ? 0M :
-                decimal.Parse(fieldValue, CultureInfo.InvariantCulture);
+            try
+            {
+                return string.IsNullOrWhiteSpace(fieldValue) ? 0M :
+                    decimal.Parse(fieldValue, CultureInfo.InvariantCulture);
+            }
+            catch (Exception exc)
+            {
+                throw new MessageParseException(fieldName, fieldValue, "decimal", exc);
+            }
         }
 
         private (OBISField, string) GetField(string fieldName, List<string> messages)
@@ -116,8 +128,15 @@ namespace P1ReaderApp.Services
         {
             var (_, fieldValue) = GetField(fieldName, messages);
 
-            return string.IsNullOrWhiteSpace(fieldValue) ? 0 :
-                int.Parse(fieldValue, CultureInfo.InvariantCulture);
+            try
+            {
+                return string.IsNullOrWhiteSpace(fieldValue) ? 0 :
+                    int.Parse(fieldValue, CultureInfo.InvariantCulture);
+            }
+            catch (Exception exc)
+            {
+                throw new MessageParseException(fieldName, fieldValue, "int", exc);
+            }
         }
 
         private string GetStringField(string fieldName, List<string> messages)

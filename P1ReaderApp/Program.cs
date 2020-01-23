@@ -5,22 +5,23 @@ using P1ReaderApp.Model;
 using P1ReaderApp.Services;
 using P1ReaderApp.Storage;
 using Serilog;
+using Serilog.Events;
 using System;
-using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace P1ReaderApp
 {
     internal static class Program
     {
         private static IMessageBuffer<P1Measurements> _measurementsBuffer;
-        private static IMessageBuffer<List<string>> _serialMessageBuffer;
+        private static IMessageBuffer<P1MessageCollection> _serialMessageBuffer;
 
-        private static void CreateDaemonLogger()
+        private static void CreateDaemonLogger(int minLogLevel)
         {
             Log.Logger = new LoggerConfiguration()
-                                .MinimumLevel.Information()
+                                .MinimumLevel.Is((LogEventLevel)minLogLevel)
                                 .WriteTo.Console()
-                                .WriteTo.File("/dev/log/p1reader.log")
                                 .CreateLogger();
         }
 
@@ -45,7 +46,7 @@ namespace P1ReaderApp
                 var dataBitsOption = target.CreateDataBitsOption();
                 var parityOption = target.CreateParityOption();
 
-                target.OnExecute(() =>
+                target.OnExecute(async () =>
                 {
                     try
                     {
@@ -57,8 +58,9 @@ namespace P1ReaderApp
                         var dataBits = dataBitsOption.GetRequiredIntValue();
                         var parity = parityOption.GetRequiredIntValue();
 
-                        var statusPrintService = new ConsoleStatusPrintService();
-                        _measurementsBuffer.RegisterMessageHandler(statusPrintService.PrintP1Measurement);
+                        IStatusPrintService statusPrintService = new ConsoleStatusPrintService();
+                        _measurementsBuffer.RegisterMessageHandler(statusPrintService.UpdateP1Measurements);
+                        _serialMessageBuffer.RegisterMessageHandler(statusPrintService.UpdateRawData);
 
                         var serialPortReader = new SerialPortReader(port, baudRate, stopBits, parity, dataBits, _serialMessageBuffer);
                         serialPortReader.StartReading();
@@ -77,7 +79,7 @@ namespace P1ReaderApp
                         Log.Fatal(exception, "Unexpected exception during startup");
                     }
 
-                    return 1;
+                    return await WaitForCancellation();
                 });
             };
         }
@@ -88,6 +90,8 @@ namespace P1ReaderApp
             {
                 target.Description = "Write to influxdb";
                 target.HelpOption("-? | -h | --help");
+
+                var loggingOption = target.CreateLoggingOption();
 
                 var portOption = target.CreatePortOption();
                 var baudRateOption = target.CreateBaudRateOption();
@@ -100,11 +104,12 @@ namespace P1ReaderApp
                 var influxUsernameOption = target.CreateInfluxUserNameOption();
                 var influxPasswordOption = target.CreateInfluxPasswordOption();
 
-                target.OnExecute(() =>
+                target.OnExecute(async () =>
                 {
                     try
                     {
-                        CreateDaemonLogger();
+                        var loglevel = loggingOption.GetOptionalIntValue(3);
+                        CreateDaemonLogger(loglevel);
 
                         var port = portOption.GetRequiredStringValue();
                         var baudRate = baudRateOption.GetRequiredIntValue();
@@ -134,14 +139,14 @@ namespace P1ReaderApp
                         Log.Fatal(exception, "Unexpected exception during startup");
                     }
 
-                    return 1;
+                    return await WaitForCancellation();
                 });
             };
         }
 
         private static void Main(string[] args)
         {
-            _serialMessageBuffer = new MessageBuffer<List<string>>();
+            _serialMessageBuffer = new MessageBuffer<P1MessageCollection>();
             _measurementsBuffer = new MessageBuffer<P1Measurements>();
             var messageParser = new MessageParser(_measurementsBuffer);
 
@@ -163,6 +168,14 @@ namespace P1ReaderApp
             });
 
             commandLineApplication.Execute(args);
+        }
+
+        private static async Task<int> WaitForCancellation()
+        {
+            var cancellationTokenSource = new CancellationTokenSource();
+            AppDomain.CurrentDomain.ProcessExit += (s, e) => cancellationTokenSource.Cancel();
+            Console.CancelKeyPress += (s, e) => cancellationTokenSource.Cancel();
+            return await Task.Delay(-1, cancellationTokenSource.Token).ContinueWith(t => { return 1; });
         }
     }
 }

@@ -14,16 +14,19 @@ namespace P1ReaderApp.Extensions
             app.Option("--influxdatabase", "InfluxDB database name", CommandOptionType.SingleValue);
 
         public static CommandOption CreateInfluxHostOption(this CommandLineApplication app) =>
-                                    app.Option("--influxhost", "InfluxDB server host", CommandOptionType.SingleValue);
+            app.Option("--influxhost", "InfluxDB server host", CommandOptionType.SingleValue);
 
         public static CommandOption CreateInfluxPasswordOption(this CommandLineApplication app) =>
             app.Option("--influxpassword", "InfluxDB database password", CommandOptionType.SingleValue);
 
         public static CommandOption CreateInfluxUserNameOption(this CommandLineApplication app) =>
-                            app.Option("--influxusername", "InfluxDB database username", CommandOptionType.SingleValue);
+            app.Option("--influxusername", "InfluxDB database username", CommandOptionType.SingleValue);
+
+        public static CommandOption CreateLoggingOption(this CommandLineApplication app) =>
+            app.Option("--logging", "Log level to display (0 = Verbose, 1 = Debug, 2 = Information, 3 = Warning, 4 = Error, 5 = Fatal)", CommandOptionType.SingleValue);
 
         public static CommandOption CreateParityOption(this CommandLineApplication app) =>
-            app.Option("--parity", "Databits to read serial port with (Example: 1 (Even) or 0 (None))", CommandOptionType.SingleValue);
+                    app.Option("--parity", "Databits to read serial port with (Example: 1 (Even) or 0 (None))", CommandOptionType.SingleValue);
 
         public static CommandOption CreatePortOption(this CommandLineApplication app) =>
             app.Option("--port", "Serial port to read from (Example: \"/dev/ttyUSB0\")", CommandOptionType.SingleValue);

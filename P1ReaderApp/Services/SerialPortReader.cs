@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using P1ReaderApp.Model;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO.Ports;
@@ -9,7 +10,7 @@ namespace P1ReaderApp.Services
 {
     public class SerialPortReader : IDisposable
     {
-        private readonly IMessageBuffer<List<string>> _messageBuffer;
+        private readonly IMessageBuffer<P1MessageCollection> _messageBuffer;
         private readonly SerialPort _serialPort;
 
         private CancellationTokenSource _cancellationTokenSource;
@@ -21,7 +22,7 @@ namespace P1ReaderApp.Services
             int stopBits,
             int parity,
             int dataBits,
-            IMessageBuffer<List<string>> messageBufferService)
+            IMessageBuffer<P1MessageCollection> messageBufferService)
         {
             _serialPort = new SerialPort(portName, baudrate)
             {
@@ -127,13 +128,23 @@ namespace P1ReaderApp.Services
                     }
                 }
 
-                await _messageBuffer.QueueMessage(messages, cancellationToken);
+                await _messageBuffer.QueueMessage(new P1MessageCollection
+                {
+                    Messages = messages,
+                    ReceivedUtc = DateTime.UtcNow,
+                }, cancellationToken);
 
-                Log.Debug("{messages}", messages);
+                if (Log.IsEnabled(Serilog.Events.LogEventLevel.Debug))
+                {
+                    foreach (var message in messages)
+                    {
+                        Log.Debug("Serial message:{message}", message);
+                    }
+                }
             }
-            catch (TimeoutException)
+            catch (TimeoutException exc)
             {
-                // Do nothing
+                Log.Debug("Timeout exception {message}", exc.Message);
             }
             catch (Exception exception)
             {

@@ -69,6 +69,8 @@ namespace P1ReaderApp.Model
         [OBISField("0-0:96.7.9")]
         public int LongPowerFailuresInAnyPhase { get; set; }
 
+        public decimal NetActualElectricityPower => ActualElectricityPowerDraw - ActualElectricityPowerDelivery;
+
         [OBISField("0-0:96.7.21")]
         public int PowerFailuresInAnyPhase { get; set; }
 
@@ -77,6 +79,10 @@ namespace P1ReaderApp.Model
 
         [OBISField("0-0:1.0.0", Format = "yyMMddHHmmss", ValueRegex = @"[\(](.*?)(W)[\)]")]
         public DateTime TimeStamp { get; set; }
+
+        public int TotalInstantaneousCurrent => InstantaneousCurrentL1 + InstantaneousCurrentL2 + InstantaneousCurrentL3;
+
+        public int TotalInstantaneousVoltage => InstantaneousVoltageL1 + InstantaneousVoltageL2 + InstantaneousVoltageL3;
 
         [OBISField("1-3:0.2.8")]
         public string Version { get; set; }

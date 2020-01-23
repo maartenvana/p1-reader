@@ -5,6 +5,11 @@ namespace P1ReaderApp.Extensions
 {
     public static class CommandOptionExtensions
     {
+        public static int GetOptionalIntValue(this CommandOption option, int defaultValue)
+        {
+            return option.HasValue() ? int.Parse(option.Value()) : defaultValue;
+        }
+
         public static string GetOptionalStringValue(this CommandOption option, string defaultValue)
         {
             return option.HasValue() ? option.Value() : defaultValue;
