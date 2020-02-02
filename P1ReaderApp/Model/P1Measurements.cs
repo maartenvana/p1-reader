@@ -58,13 +58,13 @@ namespace P1ReaderApp.Model
         public int InstantaneousCurrentL3 { get; set; }
 
         [OBISField("1-0:32.7.0", ValueRegex = @"[\(](.*?)(\*V)[\)]")]
-        public int InstantaneousVoltageL1 { get; set; }
+        public decimal InstantaneousVoltageL1 { get; set; }
 
         [OBISField("1-0:52.7.0", ValueRegex = @"[\(](.*?)(\*V)[\)]")]
-        public int InstantaneousVoltageL2 { get; set; }
+        public decimal InstantaneousVoltageL2 { get; set; }
 
         [OBISField("1-0:72.7.0", ValueRegex = @"[\(](.*?)(\*V)[\)]")]
-        public int InstantaneousVoltageL3 { get; set; }
+        public decimal InstantaneousVoltageL3 { get; set; }
 
         [OBISField("0-0:96.7.9")]
         public int LongPowerFailuresInAnyPhase { get; set; }
@@ -82,7 +82,7 @@ namespace P1ReaderApp.Model
 
         public int TotalInstantaneousCurrent => InstantaneousCurrentL1 + InstantaneousCurrentL2 + InstantaneousCurrentL3;
 
-        public int TotalInstantaneousVoltage => InstantaneousVoltageL1 + InstantaneousVoltageL2 + InstantaneousVoltageL3;
+        public decimal TotalInstantaneousVoltage => InstantaneousVoltageL1 + InstantaneousVoltageL2 + InstantaneousVoltageL3;
 
         [OBISField("1-3:0.2.8")]
         public string Version { get; set; }
