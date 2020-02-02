@@ -156,7 +156,6 @@ namespace P1ReaderApp
 
             commandLineApplication.HelpOption("-? | -h | --help");
 
-            commandLineApplication.Command("debug", DebugApplication());
             commandLineApplication.Command("influxdb", InfluxDbApplication());
             commandLineApplication.Command("debug", DebugApplication());
 
