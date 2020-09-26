@@ -52,3 +52,17 @@ Options:
   --influxusername  InfluxDB database username
   --influxpassword  InfluxDB database password
 ```
+
+# Deployment
+Use the included publish profile to publish to a folder. Make sure to copy over the contents from the linux-arm folder.
+
+On the raspberry run the following command
+```
+sudo nano /etc/rc.local
+```
+
+Add a new line with the application to run in the background (&).
+Example:
+```
+/home/pi/linux-arm/P1ReaderApp influxdb --port /dev/ttyUSB0 --baudrate 115200 --stopbits 1 --databits 7 --parity 1 --influxhost http://<ip>:<port> --influxdatabase p1 --influxusername <username> --influxpassword <password> &
+```
