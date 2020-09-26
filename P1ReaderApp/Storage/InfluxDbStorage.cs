@@ -5,16 +5,32 @@ using InfluxDB.LineProtocol.Client;
 using InfluxDB.LineProtocol.Payload;
 using System;
 using System.Collections.Generic;
+using Polly.Retry;
+using Polly;
+using P1ReaderApp.Exceptions;
 
 namespace P1ReaderApp.Storage
 {
     public class InfluxDbStorage : IStorage
     {
         private readonly LineProtocolClient _client;
+        private readonly AsyncRetryPolicy _retryPolicy;
 
         public InfluxDbStorage(string serverAddress, string database, string username, string password)
         {
             _client = new LineProtocolClient(new Uri(serverAddress), database, username, password);
+
+            _retryPolicy = Policy
+                .Handle<Exception>()
+                .WaitAndRetryForeverAsync(
+                    sleepDurationProvider: (retryAttempt) =>
+                    {
+                        return TimeSpan.FromSeconds(5);
+                    },
+                    onRetry: (exception, retryDelay) =>
+                    {
+                        Log.Error(exception, "Exception during save to influx, retrying after {retryDelay}", retryDelay);
+                    });
         }
 
         public async Task SaveP1Measurement(P1Measurements p1Measurements)
@@ -52,16 +68,17 @@ namespace P1ReaderApp.Storage
                 tags: new Dictionary<string, string>(),
                 utcTimestamp: p1Measurements.TimeStamp));
 
-            var influxResult = await _client.WriteAsync(payload);
+            await _retryPolicy.ExecuteAsync(async () =>
+            {
+                var influxResult = await _client.WriteAsync(payload);
 
-            if (!influxResult.Success)
-            {
-                Log.Error("Error writing to influxdb: {errorMessage}", influxResult.ErrorMessage);
-            }
-            else
-            {
+                if (!influxResult.Success)
+                {
+                    throw new StorageWriteException($"Error writing to influxdb: {influxResult.ErrorMessage}");
+                }
+
                 Log.Debug("Saving P1 measurement to InfluxDB was succesfull");
-            }
+            });
         }
     }
 }

@@ -22,6 +22,7 @@ namespace P1ReaderApp
             Log.Logger = new LoggerConfiguration()
                                 .MinimumLevel.Is((LogEventLevel)minLogLevel)
                                 .WriteTo.Console()
+                                .WriteTo.File("log.txt", restrictedToMinimumLevel: LogEventLevel.Warning)
                                 .CreateLogger();
         }
 
@@ -30,6 +31,7 @@ namespace P1ReaderApp
             Log.Logger = new LoggerConfiguration()
                 .MinimumLevel.Error()
                 .WriteTo.Console()
+                .WriteTo.File("log.txt", restrictedToMinimumLevel: LogEventLevel.Warning)
                 .CreateLogger();
         }
 
@@ -166,7 +168,15 @@ namespace P1ReaderApp
                 return 1;
             });
 
-            commandLineApplication.Execute(args);
+            try
+            {
+                commandLineApplication.Execute(args);
+            }
+            catch (Exception exc)
+            {
+                Log.Fatal(exc, "Fatal exception during application execute");
+                throw;
+            }
         }
 
         private static async Task<int> WaitForCancellation()
